@@ -25,3 +25,6 @@ https://pypi.org/project/PorterStemmer/
 3.3) train a classifier on the training fold, and compute the number of misclassifications on the corresponding testing fold
 
 4) finally, estimate the misclassification rate as the sum of the number of misclassified documents in the 5 testing folds, divided by the overall number of documents
+
+
+- link https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html
