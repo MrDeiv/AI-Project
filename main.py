@@ -8,7 +8,8 @@ import nltk
 import string
 import time
 
-from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_extraction.text import CountVectorizer
 
 
 def remove_punctuation(message: str) -> str:
@@ -23,7 +24,7 @@ def remove_stopwords(message: str, stop_word: set) -> list:
 
 def stem_messages(message: list, stemmer: PorterStemmer) -> list:
     """Stem a list of messages."""
-    return list(set([stemmer.stem(el) for el in message]))
+    return [stemmer.stem(el) for el in message]
 
 
 def sanitize_messages(messages: list) -> list:
@@ -34,6 +35,8 @@ def sanitize_messages(messages: list) -> list:
 
 
 if __name__ == '__main__':
+
+    #TODO: check if nltk packages are installed
     nltk.download('punkt')
     nltk.download('stopwords')
 
@@ -46,13 +49,51 @@ if __name__ == '__main__':
     # get messages
     start_t = time.time()
 
+    # ITEMS 1 AND 2
     ready_messages = sanitize_messages(newsgroup_data.data)
 
     end_t = time.time()
     print(f"Time to sanitize messages: {format(end_t - start_t, '.2f')} seconds")
 
+    # ITEMS 3
     # Split the data into 5 fold
     idx = np.linspace(0, len(labels), num=len(labels), endpoint=False, dtype='int')
     np.random.shuffle(idx)  # shuffling the elements of idx (in-place)
 
-    print(len(labels), len(idx), len(ready_messages))
+    training_folds_el = []
+    training_folds_labels = []
+    offest = (len(idx)//5)
+    for i in range(3):
+        training_folds_el.append([ready_messages[j] for j in idx[offest*i:offest*(i+1)]])
+        training_folds_labels.append([labels[j] for j in idx[offest*i:offest*(i+1)]])
+
+    test_fold_el = [ready_messages[j] for j in idx[offest*4:]]
+    test_fold_labels = [labels[j] for j in idx[offest*4:]]
+
+    # ITEM 3.1
+    # join the lists inside training_folds_el[0] into a single set
+    training_set = set()
+    for el in training_folds_el[0]:
+        training_set.update(el)
+    
+    # transform training_set into a dictionary with value corresponding to the index of the word
+    training_set = dict(zip(training_set, range(len(training_set))))
+
+    # create a matrix:
+    # - rows: number of elements in training_folds_el[0]
+    # - cols: number of words in training_set
+    training_matrix = np.zeros((len(training_folds_el[0]), len(training_set)))
+
+    # count the number of occurences of each word in each element of training_folds_el[0]
+    for i, el in enumerate(training_folds_el[0]):
+        for word in el:
+            training_matrix[i, training_set[word]] += 1
+    np.set_printoptions(threshold=1000)
+    print(training_matrix[0])
+        
+
+
+
+
+
+
